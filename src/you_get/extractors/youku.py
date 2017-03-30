@@ -307,7 +307,7 @@ class Youku(VideoExtractor):
                             ep    = parse.unquote(ep),
                             oip   = str(self.ip),
                             token = token,
-                            yxon  = 1
+                            yxon  = 0
                         ))
                         u = 'http://k.youku.com/player/getFlvPath/sid/{sid}_00' \
                             '/st/{container}/fileid/{fileid}?{q}'.format(
@@ -316,7 +316,7 @@ class Youku(VideoExtractor):
                                 fileid    = fileid,
                                 q         = q
                             )
-                        ksegs += [i['server'] for i in json.loads(get_content(u))]
+                        ksegs += [u]#ksegs += [i['server'] for i in json.loads(get_content(u))]
             except error.HTTPError as e:
                 # Use fallback stream data in case of HTTP 404
                 log.e('[Error] ' + str(e))
