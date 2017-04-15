@@ -228,7 +228,7 @@ class Youku(VideoExtractor):
                         'video_profile': stream_types[stream_id]['video_profile'],
                         'size': stream['size'],
                         'pieces': [{
-                            'fileid': stream['stream_fileid'],
+                            'fileid': stream['segs'][0]['fileid'],
                             'segs': stream['segs']
                         }]
                     }
@@ -252,14 +252,14 @@ class Youku(VideoExtractor):
                         'video_profile': stream_types[stream_id]['video_profile'],
                         'size': stream['size'],
                         'pieces': [{
-                            'fileid': stream['stream_fileid'],
+                            'fileid': stream['segs'][0]['fileid'],
                             'segs': stream['segs']
                         }]
                     }
                 else:
                     self.streams_fallback[stream_id]['size'] += stream['size']
                     self.streams_fallback[stream_id]['pieces'].append({
-                        'fileid': stream['stream_fileid'],
+                        'fileid': stream['segs'][0]['fileid'],
                         'segs': stream['segs']
                     })
 
@@ -295,9 +295,14 @@ class Youku(VideoExtractor):
                 for piece in pieces:
                     segs = piece['segs']
                     streamfileid = piece['fileid']
-                    for no in range(0, len(segs)):
+                    seg_count = len(segs)
+                    for no in range(0, seg_count):
                         k = segs[no]['key']
-                        if k == -1: break # we hit the paywall; stop here
+                        if k == -1:
+                            # we hit the paywall; stop here
+                            log.w('Skipping %d out of %d segments due to paywall' %
+                                  (seg_count - no, seg_count))
+                            break
                         fileid, ep = self.__class__.generate_ep(self, no, streamfileid,
                                                                 sid, token)
                         q = parse.urlencode(dict(
@@ -316,7 +321,7 @@ class Youku(VideoExtractor):
                                 fileid    = fileid,
                                 q         = q
                             )
-                        ksegs += [u]#ksegs += [i['server'] for i in json.loads(get_content(u))]
+                        ksegs += [u]#[i['server'] for i in json.loads(get_content(u))]
             except error.HTTPError as e:
                 # Use fallback stream data in case of HTTP 404
                 log.e('[Error] ' + str(e))
